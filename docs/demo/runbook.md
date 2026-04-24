@@ -5,6 +5,29 @@
 - AWS CLI configurado con perfil que tenga acceso a us-east-2
 - Terraform >= 1.5
 - Python >= 3.12 con boto3
+- uv (gestor de paquetes Python)
+
+---
+
+## Demo interactiva (recomendado para la charla)
+
+El script `demo_scenarios.py` ejecuta 3 escenarios automáticamente:
+
+| Escenario | Qué simula | Duración |
+|-----------|-----------|----------|
+| **normal** | Tráfico estable de e-commerce | 20s |
+| **blackfriday** | 🔥 Spike 5x — Black Friday | 20s |
+| **checkout_drop** | ⚠️ Muchas visitas, cero compras | 15s |
+
+### Ejecutar la demo completa (3 actos)
+```bash
+uv run python src/producers/demo_scenarios.py
+```
+
+### Ejecutar un escenario individual
+```bash
+uv run python src/producers/demo_scenarios.py blackfriday 30
+```
 
 ---
 
