@@ -188,3 +188,80 @@ output "workgroup" {
 output "database" {
   value = aws_glue_catalog_database.this.name
 }
+
+# --- Views (created via named queries — run once) ---
+
+resource "aws_athena_named_query" "create_view_hourly_revenue" {
+  name      = "CREATE VIEW — Hourly revenue"
+  workgroup = aws_athena_workgroup.this.name
+  database  = aws_glue_catalog_database.this.name
+  query     = <<-EOQ
+    CREATE OR REPLACE VIEW hourly_revenue AS
+    SELECT
+      CAST(date_trunc('hour', from_iso8601_timestamp(timestamp)) AS varchar) AS hour,
+      COUNT(*) AS purchase_count,
+      SUM(total_amount) AS total_revenue,
+      ROUND(AVG(total_amount), 2) AS avg_order_value
+    FROM events
+    WHERE event_type = 'purchase'
+    GROUP BY 1
+  EOQ
+}
+
+resource "aws_athena_named_query" "create_view_product_performance" {
+  name      = "CREATE VIEW — Product performance"
+  workgroup = aws_athena_workgroup.this.name
+  database  = aws_glue_catalog_database.this.name
+  query     = <<-EOQ
+    CREATE OR REPLACE VIEW product_performance AS
+    SELECT
+      product_id,
+      product_name,
+      COUNT(CASE WHEN action = 'add' THEN 1 END) AS times_added,
+      COUNT(CASE WHEN action = 'remove' THEN 1 END) AS times_removed,
+      COUNT(CASE WHEN action = 'add' THEN 1 END)
+        - COUNT(CASE WHEN action = 'remove' THEN 1 END) AS net_adds
+    FROM events
+    WHERE event_type = 'cart_event'
+    GROUP BY product_id, product_name
+  EOQ
+}
+
+resource "aws_athena_named_query" "create_view_user_journey" {
+  name      = "CREATE VIEW — User journey summary"
+  workgroup = aws_athena_workgroup.this.name
+  database  = aws_glue_catalog_database.this.name
+  query     = <<-EOQ
+    CREATE OR REPLACE VIEW user_journey AS
+    SELECT
+      user_id,
+      COUNT(CASE WHEN event_type = 'page_view' THEN 1 END) AS page_views,
+      COUNT(CASE WHEN event_type = 'cart_event' THEN 1 END) AS cart_actions,
+      COUNT(CASE WHEN event_type = 'purchase' THEN 1 END) AS purchases,
+      MIN(timestamp) AS first_seen,
+      MAX(timestamp) AS last_seen
+    FROM events
+    GROUP BY user_id
+  EOQ
+}
+
+resource "aws_athena_named_query" "query_hourly_revenue" {
+  name      = "Query — Hourly revenue (last 24h)"
+  workgroup = aws_athena_workgroup.this.name
+  database  = aws_glue_catalog_database.this.name
+  query     = "SELECT * FROM hourly_revenue ORDER BY hour DESC LIMIT 24"
+}
+
+resource "aws_athena_named_query" "query_product_performance" {
+  name      = "Query — Product performance (top 10)"
+  workgroup = aws_athena_workgroup.this.name
+  database  = aws_glue_catalog_database.this.name
+  query     = "SELECT * FROM product_performance ORDER BY net_adds DESC LIMIT 10"
+}
+
+resource "aws_athena_named_query" "query_user_journey" {
+  name      = "Query — Users who viewed but never purchased"
+  workgroup = aws_athena_workgroup.this.name
+  database  = aws_glue_catalog_database.this.name
+  query     = "SELECT * FROM user_journey WHERE purchases = 0 AND page_views > 3 ORDER BY page_views DESC LIMIT 20"
+}
