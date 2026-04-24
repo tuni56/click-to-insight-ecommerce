@@ -5,6 +5,9 @@ variable "table_arn" {}
 variable "firehose_name" {}
 variable "firehose_arn" {}
 variable "eventbridge_arn" {}
+variable "dlq_arn" {
+  default = ""
+}
 
 data "archive_file" "this" {
   type        = "zip"
@@ -70,6 +73,13 @@ resource "aws_lambda_function" "this" {
       FIREHOSE_STREAM = var.firehose_name
     }
   }
+
+  dynamic "dead_letter_config" {
+    for_each = var.dlq_arn != "" ? [1] : []
+    content {
+      target_arn = var.dlq_arn
+    }
+  }
 }
 
 resource "aws_lambda_permission" "eventbridge" {
@@ -86,4 +96,8 @@ output "function_arn" {
 
 output "function_name" {
   value = aws_lambda_function.this.function_name
+}
+
+output "role_name" {
+  value = aws_iam_role.this.name
 }
