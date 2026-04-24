@@ -61,8 +61,17 @@ module "athena" {
 }
 
 module "dashboard" {
-  source        = "./modules/dashboard"
+  source         = "./modules/dashboard"
+  project        = var.project
+  function_name  = module.lambda.function_name
+  dashboard_body = file("${path.module}/../dashboards/cloudwatch-dashboard.json")
+}
+
+module "alarms" {
+  count         = var.alert_email != "" ? 1 : 0
+  source        = "./modules/alarms"
   project       = var.project
   function_name = module.lambda.function_name
-  dashboard_body = file("${path.module}/../dashboards/cloudwatch-dashboard.json")
+  dlq_name      = module.dlq.queue_name
+  alert_email   = var.alert_email
 }
