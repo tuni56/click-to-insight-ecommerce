@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CartEvent",
+  "type": "object",
+  "required": ["event_type", "event_id", "user_id", "product_id", "action", "quantity", "timestamp"],
+  "properties": {
+    "event_type": { "const": "cart_event" },
+    "event_id": { "type": "string", "format": "uuid" },
+    "user_id": { "type": "string" },
+    "product_id": { "type": "string" },
+    "product_name": { "type": "string" },
+    "action": { "type": "string", "enum": ["add", "remove"] },
+    "quantity": { "type": "integer", "minimum": 1 },
+    "unit_price": { "type": "number" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

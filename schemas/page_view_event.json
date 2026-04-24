@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PageViewEvent",
+  "type": "object",
+  "required": ["event_type", "event_id", "user_id", "page_url", "timestamp"],
+  "properties": {
+    "event_type": { "const": "page_view" },
+    "event_id": { "type": "string", "format": "uuid" },
+    "user_id": { "type": "string" },
+    "page_url": { "type": "string" },
+    "session_id": { "type": "string" },
+    "referrer": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

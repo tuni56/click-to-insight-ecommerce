@@ -1,0 +1,69 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Events per Minute by Type",
+        "metrics": [
+          ["Ecommerce/Events", "EventCount", "EventType", "page_view", {"stat": "Sum", "period": 60}],
+          ["Ecommerce/Events", "EventCount", "EventType", "cart_event", {"stat": "Sum", "period": 60}],
+          ["Ecommerce/Events", "EventCount", "EventType", "purchase", {"stat": "Sum", "period": 60}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-2",
+        "period": 60
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Revenue (USD) — Last Hour",
+        "metrics": [
+          ["Ecommerce/Events", "Revenue", "Currency", "USD", {"stat": "Sum", "period": 60}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-2",
+        "period": 60
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Total Events (All Types)",
+        "metrics": [
+          ["Ecommerce/Events", "EventCount", "EventType", "page_view", {"stat": "Sum", "period": 3600}],
+          ["Ecommerce/Events", "EventCount", "EventType", "cart_event", {"stat": "Sum", "period": 3600}],
+          ["Ecommerce/Events", "EventCount", "EventType", "purchase", {"stat": "Sum", "period": 3600}]
+        ],
+        "view": "singleValue",
+        "region": "us-east-2",
+        "period": 3600
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Lambda Duration (ms)",
+        "metrics": [
+          ["AWS/Lambda", "Duration", "FunctionName", "click-to-insight-process-event", {"stat": "Average", "period": 60}],
+          ["AWS/Lambda", "Duration", "FunctionName", "click-to-insight-process-event", {"stat": "p99", "period": 60}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-2",
+        "period": 60
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Lambda Errors",
+        "metrics": [
+          ["AWS/Lambda", "Errors", "FunctionName", "click-to-insight-process-event", {"stat": "Sum", "period": 60}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-2",
+        "period": 60
+      }
+    }
+  ]
+}
