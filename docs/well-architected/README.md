@@ -31,7 +31,7 @@
 | Práctica | Implementación |
 |----------|---------------|
 | Desacoplamiento | EventBridge desacopla producers de consumers |
-| Retry automático | EventBridge retry policy + Lambda DLQ |
+| Retry automático | EventBridge retry policy + Lambda DLQ (SQS, 14 días retención) |
 | Multi-AZ | DynamoDB, S3, Lambda son multi-AZ por defecto |
 | Idempotencia | event_id como partition key previene duplicados |
 
@@ -66,6 +66,7 @@ Para sub-10ms, considerar Kinesis + Flink.
 **Estimación para demo**: < $5 USD/mes con tráfico de prueba.
 **Estimación producción**: Depende del volumen. EventBridge $1/M eventos,
 Lambda $0.20/M invocaciones, DynamoDB ~$1.25/M writes.
+Athena $5/TB scanned (particionamiento por fecha reduce costos).
 
 ---
 

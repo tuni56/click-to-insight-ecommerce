@@ -17,3 +17,15 @@ output "s3_bucket" {
 output "firehose_stream" {
   value = module.firehose.stream_name
 }
+
+output "dlq_url" {
+  value = module.dlq.queue_url
+}
+
+output "athena_workgroup" {
+  value = module.athena.workgroup
+}
+
+output "athena_database" {
+  value = module.athena.database
+}

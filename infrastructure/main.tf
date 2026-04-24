@@ -44,11 +44,34 @@ module "lambda" {
   firehose_name   = module.firehose.stream_name
   firehose_arn    = module.firehose.stream_arn
   eventbridge_arn = module.eventbridge.rule_arn
+  dlq_arn         = module.dlq.queue_arn
+}
+
+module "dlq" {
+  source           = "./modules/dlq"
+  project          = var.project
+  lambda_role_name = module.lambda.role_name
+}
+
+module "athena" {
+  source     = "./modules/athena"
+  project    = var.project
+  bucket_id  = module.firehose.bucket_id
+  account_id = local.account_id
 }
 
 module "dashboard" {
-  source        = "./modules/dashboard"
+  source         = "./modules/dashboard"
+  project        = var.project
+  function_name  = module.lambda.function_name
+  dashboard_body = file("${path.module}/../dashboards/cloudwatch-dashboard.json")
+}
+
+module "alarms" {
+  count         = var.alert_email != "" ? 1 : 0
+  source        = "./modules/alarms"
   project       = var.project
   function_name = module.lambda.function_name
-  dashboard_body = file("${path.module}/../dashboards/cloudwatch-dashboard.json")
+  dlq_name      = module.dlq.queue_name
+  alert_email   = var.alert_email
 }
