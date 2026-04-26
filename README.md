@@ -23,23 +23,32 @@ desacoplada y resiliente — sin que los productores se rompan cuando el backend
 ## Arquitectura
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────────┐     ┌──────────────┐
-│  Event      │────▶│  Amazon      │────▶│  AWS Lambda      │────▶│  Amazon      │
-│  Producers  │     │  EventBridge │     │  (Transform +    │     │  DynamoDB    │
-│  (Python)   │     │              │     │   Enrich)        │     │  (Real-time) │
-└─────────────┘     └──────┬───────┘     └────────┬────────┘     └──────────────┘
-                           │                      │
-                           │                      ▼
-                           │              ┌─────────────────┐     ┌──────────────┐
-                           │              │  Amazon Kinesis  │────▶│  S3 + Athena │
-                           │              │  Data Firehose   │     │  (Analytics) │
-                           │              └─────────────────┘     └──────────────┘
-                           │
-                           ▼
-                    ┌─────────────────┐
-                    │  Amazon         │
-                    │  CloudWatch     │
-                    │  (Dashboards)   │
+                                                          ┌──────────────┐
+                                                     ┌───▶│  Amazon      │
+                                                     │    │  DynamoDB    │
+                                                     │    │  (Real-time) │
+                                                     │    └──────────────┘
+                                                     │          ▲
+                                                     │    ┌─────┴────────┐
+┌─────────────┐     ┌──────────────┐     ┌───────────┴─┐  │   Circuit    │
+│  Event      │────▶│  Amazon      │────▶│  AWS Lambda  │──┤   Breaker    │
+│  Producers  │     │  EventBridge │     │  (Transform  │  │  (Degrade    │
+│  (Python)   │     │              │     │   + Enrich)  │  │   Gracefully)│
+└─────────────┘     └──────┬───────┘     └──┬───────┬──┘  └──────────────┘
+                           │                │       │
+                           │                │       ▼
+                           │                │ ┌─────────────────┐  ┌──────────────┐
+                           │                │ │  Amazon Kinesis  │─▶│  S3 + Athena │
+                           │                │ │  Data Firehose   │  │  (Analytics) │
+                           │                │ └─────────────────┘  └──────────────┘
+                           │                │
+                           ▼                ▼
+                    ┌─────────────────┐  ┌─────────────┐
+                    │  Amazon         │  │  Amazon SQS  │
+                    │  CloudWatch     │  │  (DLQ)       │
+                    │  (Metrics +     │  │  ⚠ Alarma    │
+                    │   Dashboards +  │  └──────┬──────┘
+                    │   Alarms)       │◀────────┘
                     └─────────────────┘
 ```
 
@@ -50,6 +59,12 @@ desacoplada y resiliente — sin que los productores se rompan cuando el backend
 3. **Process** — Lambda transforma, valida y enriquece cada evento
 4. **Store** — DynamoDB para acceso real-time, S3 vía Firehose para analytics
 5. **Insight** — CloudWatch dashboards muestran métricas de negocio en vivo
+
+### Resiliencia
+
+- **Circuit Breaker** — Si DynamoDB falla, Lambda deja de escribir ahí (circuito abierto) pero sigue enviando a Firehose y emitiendo métricas. Cuando DynamoDB se recupera, el circuito se cierra automáticamente.
+- **Dead Letter Queue** — Eventos que Lambda no puede procesar van a SQS (14 días de retención) para investigación y reprocesamiento.
+- **Alarmas** — CloudWatch alerta por SNS cuando hay errores de Lambda, throttling, o mensajes en la DLQ.
 
 ---
 
