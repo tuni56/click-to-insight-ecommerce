@@ -64,6 +64,24 @@
         "region": "us-east-2",
         "period": 60
       }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "🔌 Circuit Breaker — DynamoDB Skipped Writes",
+        "metrics": [
+          ["Ecommerce/Events", "DynamoCircuitOpen", {"stat": "Sum", "period": 60}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-2",
+        "period": 60,
+        "yAxis": {"left": {"min": 0}},
+        "annotations": {
+          "horizontal": [
+            {"label": "Circuit opening", "value": 1, "color": "#d62728"}
+          ]
+        }
+      }
     }
   ]
 }

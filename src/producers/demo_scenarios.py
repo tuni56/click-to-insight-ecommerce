@@ -39,6 +39,11 @@ SCENARIOS = {
         "page_views": 20, "cart_events": 10, "purchases": 0,
         "delay": 0.5, "users": 30,
     },
+    "dlq_poison": {
+        "description": "💀 Poison pills — events that simulate Lambda failures → DLQ",
+        "count": 5,
+        "delay": 0.5,
+    },
 }
 
 
@@ -97,7 +102,56 @@ def send_batch(entries):
     return failed
 
 
+def run_dlq_scenario():
+    """Send poison pill messages directly to the DLQ to simulate Lambda failures."""
+    scenario = SCENARIOS["dlq_poison"]
+    sqs = boto3.client("sqs", region_name=REGION)
+
+    # Discover the DLQ URL by convention
+    queue_name = "click-to-insight-dlq"
+    try:
+        queue_url = sqs.get_queue_url(QueueName=queue_name)["QueueUrl"]
+    except Exception as e:
+        print(f"  ❌ Could not find DLQ '{queue_name}': {e}")
+        return 0
+
+    print(f"\n{'='*60}")
+    print(f"  SCENARIO: DLQ_POISON")
+    print(f"  {scenario['description']}")
+    print(f"{'='*60}\n")
+
+    total = 0
+    for i in range(scenario["count"]):
+        poison = {
+            "error": "Simulated Lambda failure",
+            "original_event": {
+                "event_type": random.choice(["page_view", "cart_event", "purchase"]),
+                "event_id": str(uuid.uuid4()),
+                "user_id": random.choice(USERS[:10]),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+            "failure_reason": random.choice([
+                "DynamoDB ProvisionedThroughputExceededException",
+                "Firehose ServiceUnavailableException",
+                "Lambda timeout after 30s",
+                "ValidationError: missing required field 'event_type'",
+            ]),
+            "failed_at": datetime.now(timezone.utc).isoformat(),
+            "retry_count": 3,
+        }
+        sqs.send_message(QueueUrl=queue_url, MessageBody=json.dumps(poison))
+        total += 1
+        print(f"  💀 [{i+1}/{scenario['count']}] Poison pill → DLQ  reason={poison['failure_reason']}")
+        time.sleep(scenario["delay"])
+
+    print(f"\n✅ Sent {total} poison pills to DLQ '{queue_name}'")
+    return total
+
+
 def run_scenario(name, duration_seconds=30):
+    if name == "dlq_poison":
+        return run_dlq_scenario()
+
     scenario = SCENARIOS[name]
     users = USERS[: scenario["users"]]
     delay = scenario["delay"]
@@ -171,9 +225,14 @@ def main():
     # Act 3: Checkout drop
     grand_total += run_scenario("checkout_drop", duration_seconds=15)
 
+    # Act 4: Poison pills → DLQ
+    print("\n⏳ Simulating failed events hitting the DLQ...\n")
+    time.sleep(2)
+    grand_total += run_scenario("dlq_poison")
+
     print(f"\n{'='*60}")
     print(f"  🎬 DEMO COMPLETE — {grand_total} total events sent")
-    print(f"  Now check CloudWatch Dashboard and Athena queries!")
+    print(f"  Now check CloudWatch Dashboard, DLQ, and Athena queries!")
     print(f"{'='*60}")
 
 
