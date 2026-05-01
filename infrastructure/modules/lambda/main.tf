@@ -4,7 +4,10 @@ variable "table_name" {}
 variable "table_arn" {}
 variable "firehose_name" {}
 variable "firehose_arn" {}
-variable "eventbridge_arn" {}
+variable "kafka_topic_arn" {}
+variable "kafka_bootstrap_servers" {
+  default = ""
+}
 variable "dlq_arn" {
   default = ""
 }
@@ -50,6 +53,11 @@ resource "aws_iam_role_policy" "this" {
       },
       {
         Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = var.kafka_topic_arn
+      },
+      {
+        Effect   = "Allow"
         Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:*:*:*"
       }
@@ -82,12 +90,25 @@ resource "aws_lambda_function" "this" {
   }
 }
 
-resource "aws_lambda_permission" "eventbridge" {
-  statement_id  = "AllowEventBridge"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.this.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = var.eventbridge_arn
+# Self-managed Kafka (Confluent Cloud) event source mapping
+resource "aws_lambda_event_source_mapping" "kafka" {
+  count             = var.kafka_bootstrap_servers != "" ? 1 : 0
+  function_name     = aws_lambda_function.this.arn
+  event_source_arn  = null
+  topics            = ["page_view", "cart_event", "purchase"]
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 100
+
+  self_managed_event_source {
+    endpoints = {
+      KAFKA_BOOTSTRAP_SERVERS = var.kafka_bootstrap_servers
+    }
+  }
+
+  source_access_configuration {
+    type = "SASL_SCRAM_512_AUTH"
+    uri  = var.kafka_topic_arn
+  }
 }
 
 output "function_arn" {

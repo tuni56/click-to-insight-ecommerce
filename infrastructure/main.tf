@@ -18,10 +18,9 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
 }
 
-module "eventbridge" {
-  source     = "./modules/eventbridge"
-  project    = var.project
-  lambda_arn = module.lambda.function_arn
+module "kafka" {
+  source  = "./modules/kafka"
+  project = var.project
 }
 
 module "dynamodb" {
@@ -43,7 +42,7 @@ module "lambda" {
   table_arn       = module.dynamodb.table_arn
   firehose_name   = module.firehose.stream_name
   firehose_arn    = module.firehose.stream_arn
-  eventbridge_arn = module.eventbridge.rule_arn
+  kafka_topic_arn = module.kafka.topic_arn
   dlq_arn         = module.dlq.queue_arn
 }
 
@@ -60,11 +59,9 @@ module "athena" {
   account_id = local.account_id
 }
 
-module "dashboard" {
-  source         = "./modules/dashboard"
-  project        = var.project
-  function_name  = module.lambda.function_name
-  dashboard_body = file("${path.module}/../dashboards/cloudwatch-dashboard.json")
+module "grafana_iam" {
+  source  = "./modules/grafana_iam"
+  project = var.project
 }
 
 module "alarms" {

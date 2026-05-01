@@ -17,20 +17,10 @@ table = dynamodb.Table(TABLE_NAME)
 
 # ---------------------------------------------------------------------------
 # Circuit Breaker — protects DynamoDB writes
-#
-# States:
-#   CLOSED   → normal operation, writes go to DynamoDB
-#   OPEN     → DynamoDB is failing, skip writes (degrade gracefully)
-#   HALF_OPEN → try one write to see if DynamoDB recovered
-#
-# Lives in module-level globals so state persists across warm Lambda
-# invocations (same execution environment).  A cold start resets to CLOSED,
-# which is the safe default — if DynamoDB is still down the breaker will
-# re-open after FAILURE_THRESHOLD failures.
 # ---------------------------------------------------------------------------
 
-FAILURE_THRESHOLD = 3          # consecutive failures to open the circuit
-RECOVERY_TIMEOUT = 30          # seconds before trying again (half-open)
+FAILURE_THRESHOLD = 3
+RECOVERY_TIMEOUT = 30
 
 _cb_state = "CLOSED"
 _cb_failures = 0
@@ -66,21 +56,26 @@ def _cb_allow_request():
 # ---------------------------------------------------------------------------
 
 def handler(event, context):
-    detail = event.get("detail", {})
-    enriched = enrich_raw(detail)
+    # Kafka trigger delivers records in event["records"]
+    records = event.get("records", {})
+    processed = 0
 
-    # Firehose always receives the event — this is our durable path
-    firehose.put_record(
-        DeliveryStreamName=FIREHOSE_STREAM,
-        Record={"Data": json.dumps(enriched) + "\n"},
-    )
+    for topic_partition, messages in records.items():
+        for msg in messages:
+            import base64
+            payload = json.loads(base64.b64decode(msg["value"]))
+            enriched = enrich_raw(payload)
 
-    # DynamoDB write protected by circuit breaker
-    dynamo_ok = _write_to_dynamodb(enriched)
+            firehose.put_record(
+                DeliveryStreamName=FIREHOSE_STREAM,
+                Record={"Data": json.dumps(enriched) + "\n"},
+            )
 
-    emit_metric(detail, dynamo_ok)
+            dynamo_ok = _write_to_dynamodb(enriched)
+            emit_metric(payload, dynamo_ok)
+            processed += 1
 
-    return {"statusCode": 200, "event_id": detail.get("event_id"), "dynamo_circuit": _cb_state}
+    return {"statusCode": 200, "processed": processed, "dynamo_circuit": _cb_state}
 
 
 def _write_to_dynamodb(enriched):
@@ -116,26 +111,20 @@ def emit_metric(record, dynamo_ok):
             "Dimensions": [{"Name": "EventType", "Value": event_type}],
             "Value": 1,
             "Unit": "Count",
-        }
-    ]
-
-    if event_type == "purchase":
-        metrics.append(
-            {
-                "MetricName": "Revenue",
-                "Dimensions": [{"Name": "Currency", "Value": record.get("currency", "USD")}],
-                "Value": float(record.get("total_amount", 0)),
-                "Unit": "None",
-            }
-        )
-
-    # Circuit breaker observability — key metric for the demo
-    metrics.append(
+        },
         {
             "MetricName": "DynamoCircuitOpen",
             "Value": 0 if dynamo_ok else 1,
             "Unit": "Count",
-        }
-    )
+        },
+    ]
+
+    if event_type == "purchase":
+        metrics.append({
+            "MetricName": "Revenue",
+            "Dimensions": [{"Name": "Currency", "Value": record.get("currency", "USD")}],
+            "Value": float(record.get("total_amount", 0)),
+            "Unit": "None",
+        })
 
     cloudwatch.put_metric_data(Namespace="Ecommerce/Events", MetricData=metrics)

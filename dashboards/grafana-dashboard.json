@@ -1,0 +1,703 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 4,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "afkrqtto8a51cd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "alias": "page_view",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "EventType": "page_view"
+          },
+          "label": "page_view",
+          "metricEditorMode": 0,
+          "metricName": "EventCount",
+          "metricQueryType": 0,
+          "namespace": "Ecommerce/Events",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "cart_event",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "EventType": "cart_event"
+          },
+          "label": "cart_event",
+          "metricName": "EventCount",
+          "metricQueryType": 0,
+          "namespace": "Ecommerce/Events",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "us-east-2",
+          "statistic": "Sum"
+        },
+        {
+          "alias": "purchase",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "EventType": "purchase"
+          },
+          "label": "purchase",
+          "metricName": "EventCount",
+          "metricQueryType": 0,
+          "namespace": "Ecommerce/Events",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "us-east-2",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "Events per Minute by Type",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "afkrqtto8a51cd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "alias": "Revenue USD",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "Currency": "USD"
+          },
+          "label": "Revenue USD",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "Revenue",
+          "metricQueryType": 0,
+          "namespace": "Ecommerce/Events",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {},
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "",
+          "metricQueryType": 0,
+          "namespace": "",
+          "period": "",
+          "queryLanguage": "CWLI",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "Revenue (USD) — Last Hour",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "afkrqtto8a51cd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "CLOSED ✅"
+                },
+                "1": {
+                  "text": "OPEN 🔴"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "alias": "Circuit Open",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {},
+          "label": "Circuit Open",
+          "metricEditorMode": 0,
+          "metricName": "DynamoCircuitOpen",
+          "metricQueryType": 0,
+          "namespace": "Ecommerce/Events",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "🔌 Circuit Breaker — DynamoDB",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "afkrqtto8a51cd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 6,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "alias": "avg",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "FunctionName": "click-to-insight-process-event"
+          },
+          "label": "avg",
+          "metricEditorMode": 0,
+          "metricName": "Duration",
+          "metricQueryType": 0,
+          "namespace": "AWS/Lambda",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Average"
+        },
+        {
+          "alias": "p99",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "FunctionName": "click-to-insight-process-event"
+          },
+          "label": "p99",
+          "metricName": "Duration",
+          "metricQueryType": 0,
+          "namespace": "AWS/Lambda",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "us-east-2",
+          "statistic": "p99"
+        }
+      ],
+      "title": "Lambda Duration (ms)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "afkrqtto8a51cd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "alias": "Errors",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "FunctionName": "click-to-insight-process-event"
+          },
+          "label": "Errors",
+          "metricEditorMode": 0,
+          "metricName": "Errors",
+          "metricQueryType": 0,
+          "namespace": "AWS/Lambda",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "Lambda Errors",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "afkrqtto8a51cd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 12
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "alias": "DLQ depth",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "afkrqtto8a51cd"
+          },
+          "dimensions": {
+            "QueueName": "click-to-insight-dlq"
+          },
+          "label": "DLQ depth",
+          "metricEditorMode": 0,
+          "metricName": "ApproximateNumberOfMessagesVisible",
+          "metricQueryType": 0,
+          "namespace": "AWS/SQS",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "DLQ Messages",
+      "type": "stat"
+    }
+  ],
+  "preload": false,
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "tags": [
+    "ecommerce",
+    "kafka",
+    "lambda"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Del Click al Insight — E-commerce Events",
+  "uid": "dfksbnyv5rtogb",
+  "version": 2
+}

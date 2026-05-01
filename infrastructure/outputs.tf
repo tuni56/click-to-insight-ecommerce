@@ -1,7 +1,3 @@
-output "event_bus_name" {
-  value = module.eventbridge.bus_name
-}
-
 output "lambda_function" {
   value = module.lambda.function_name
 }
@@ -28,4 +24,14 @@ output "athena_workgroup" {
 
 output "athena_database" {
   value = module.athena.database
+}
+
+output "grafana_iam_access_key" {
+  value     = module.grafana_iam.access_key_id
+  sensitive = true
+}
+
+output "grafana_iam_secret_key" {
+  value     = module.grafana_iam.secret_access_key
+  sensitive = true
 }

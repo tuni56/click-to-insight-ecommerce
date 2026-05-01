@@ -2,14 +2,26 @@ import json
 import time
 import uuid
 import random
+import os
+import base64
 import boto3
 from datetime import datetime, timezone
+from confluent_kafka import Producer
 
-REGION = "us-east-2"
-EVENT_BUS = "click-to-insight-events"
-SOURCE = "ecommerce.storefront"
+BOOTSTRAP_SERVERS = os.environ["KAFKA_BOOTSTRAP_SERVERS"]
+SASL_USERNAME = os.environ["KAFKA_API_KEY"]
+SASL_PASSWORD = os.environ["KAFKA_API_SECRET"]
+REGION = os.environ.get("AWS_DEFAULT_REGION", "us-east-2")
+LAMBDA_FUNCTION = "click-to-insight-process-event"
 
-client = boto3.client("events", region_name=REGION)
+producer = Producer({
+    "bootstrap.servers": BOOTSTRAP_SERVERS,
+    "security.protocol": "SASL_SSL",
+    "sasl.mechanism": "PLAIN",
+    "sasl.username": SASL_USERNAME,
+    "sasl.password": SASL_PASSWORD,
+})
+lambda_client = boto3.client("lambda", region_name=REGION)
 
 USERS = [f"user_{i}" for i in range(1, 21)]
 PAGES = ["/home", "/products", "/products/123", "/cart", "/checkout", "/checkout/success"]
@@ -20,6 +32,12 @@ PRODUCTS = [
     {"id": "prod_103", "name": "Monitor Stand", "price": 45.00},
     {"id": "prod_104", "name": "Webcam HD", "price": 79.99},
     {"id": "prod_105", "name": "Laptop Sleeve", "price": 24.99},
+]
+
+EVENTS = [
+    (None, "page_view", 5),
+    (None, "cart_event", 3),
+    (None, "purchase", 1),
 ]
 
 
@@ -52,12 +70,8 @@ def cart_event():
 def purchase_event():
     items = random.sample(PRODUCTS, k=random.randint(1, 3))
     order_items = [
-        {
-            "product_id": p["id"],
-            "product_name": p["name"],
-            "quantity": random.randint(1, 2),
-            "unit_price": p["price"],
-        }
+        {"product_id": p["id"], "product_name": p["name"],
+         "quantity": random.randint(1, 2), "unit_price": p["price"]}
         for p in items
     ]
     total = sum(i["unit_price"] * i["quantity"] for i in order_items)
@@ -73,45 +87,52 @@ def purchase_event():
     }
 
 
-# Weighted distribution: many page views, some cart events, few purchases
-EVENTS = [
-    (page_view, "page_view", 5),
-    (cart_event, "cart_event", 3),
-    (purchase_event, "purchase", 1),
-]
+BUILDERS = {"page_view": page_view, "cart_event": cart_event, "purchase": purchase_event}
 
 
-def send_batch(entries):
-    response = client.put_events(Entries=entries)
-    failed = response.get("FailedEntryCount", 0)
-    if failed:
-        print(f"  ⚠ {failed} events failed")
-    return failed
+def invoke_lambda(batch_by_topic):
+    """Invoke Lambda with a Kafka-shaped payload so the pipeline runs end-to-end."""
+    records = {
+        f"{topic}-0": [{"value": base64.b64encode(json.dumps(e).encode()).decode()} for e in events]
+        for topic, events in batch_by_topic.items() if events
+    }
+    lambda_client.invoke(
+        FunctionName=LAMBDA_FUNCTION,
+        InvocationType="Event",  # async — don't block the producer
+        Payload=json.dumps({"records": records}),
+    )
 
 
-print(f"🚀 Producing events to EventBridge bus '{EVENT_BUS}' in {REGION}")
-print("   Ctrl+C to stop\n")
+def delivery_report(err, msg):
+    if err:
+        print(f"  ⚠ Delivery failed: {err}", flush=True)
+
+
+print("🚀 Producing events to Kafka (Confluent Cloud) → Lambda → Grafana", flush=True)
+print("   Ctrl+C to stop\n", flush=True)
 
 total_sent = 0
 try:
     while True:
-        entries = []
-        for builder, detail_type, weight in EVENTS:
+        batch_by_topic = {"page_view": [], "cart_event": [], "purchase": []}
+        for _, topic, weight in EVENTS:
+            builder = BUILDERS[topic]
             for _ in range(weight):
                 event = builder()
-                entries.append(
-                    {
-                        "Source": SOURCE,
-                        "DetailType": detail_type,
-                        "Detail": json.dumps(event),
-                        "EventBusName": EVENT_BUS,
-                    }
+                batch_by_topic[topic].append(event)
+                producer.produce(
+                    topic=topic,
+                    key=event["user_id"],
+                    value=json.dumps(event),
+                    callback=delivery_report,
                 )
-                print(f"  [{detail_type:<12}] user={event['user_id']:<8} id={event['event_id'][:8]}")
+                print(f"  [{topic:<12}] user={event['user_id']:<8} id={event['event_id'][:8]}", flush=True)
 
-        send_batch(entries)
-        total_sent += len(entries)
-        print(f"  --- batch sent ({total_sent} total) ---\n")
+        producer.flush()
+        invoke_lambda(batch_by_topic)
+        total_sent += sum(w for _, _, w in EVENTS)
+        print(f"  --- batch sent ({total_sent} total) ---\n", flush=True)
         time.sleep(1)
 except KeyboardInterrupt:
+    producer.flush()
     print(f"\n✅ Producer stopped. Total events sent: {total_sent}")

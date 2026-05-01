@@ -15,3 +15,11 @@ uv.lock
 
 # Environment
 .env
+
+# Presentation & scripts (local only)
+*.pdf
+docs/demo/runbook.md
+docs/demo/guion.md
+
+# Unused modules
+infrastructure/modules/grafana/

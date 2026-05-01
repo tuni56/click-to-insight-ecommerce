@@ -1,10 +1,14 @@
 # Del Click al Insight: Arquitecturas Event-Driven en Tiempo Real para E-commerce
 
 [![AWS](https://img.shields.io/badge/AWS-Event--Driven-FF9900?style=flat&logo=amazonaws)](https://aws.amazon.com/)
+[![Kafka](https://img.shields.io/badge/Apache-Kafka-231F20?style=flat&logo=apachekafka)](https://kafka.apache.org/)
 [![Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?style=flat&logo=terraform)](https://www.terraform.io/)
 [![ACM](https://img.shields.io/badge/ACM%20Week%202026-Bogotá-blue)](https://www.acm.org/)
 
-Plataforma event-driven en tiempo real para e-commerce, construida 100% con servicios AWS.
+En e-commerce, reaccionar tarde puede significar perder una oportunidad. Esta plataforma event-driven
+demuestra cómo transformar un simple clic en un insight accionable dentro de una plataforma de datos,
+respondiendo al comportamiento del usuario en tiempo real.
+
 Proyecto y demo para la charla en **ACM Week 2026 — Bogotá**.
 
 ---
@@ -20,6 +24,22 @@ desacoplada y resiliente — sin que los productores se rompan cuando el backend
 
 ---
 
+## Las tres piezas clave
+
+### 1. Ingesta y enrutamiento de eventos
+Capturar cada interacción del usuario y dirigirla al destino correcto con baja latencia,
+usando Apache Kafka como backbone de mensajería y AWS Route 53 para resolución de tráfico.
+
+### 2. Procesamiento asíncrono
+Transformar, validar y enriquecer eventos de forma desacoplada mediante AWS Lambda,
+permitiendo que los productores evolucionen independientemente del backend.
+
+### 3. Observabilidad de punta a punta
+Monitorear la salud del sistema en tiempo real con Grafana, detectando anomalías
+y midiendo métricas de negocio desde el primer evento hasta el insight final.
+
+---
+
 ## Arquitectura
 
 ```
@@ -31,52 +51,53 @@ desacoplada y resiliente — sin que los productores se rompan cuando el backend
                                                      │          ▲
                                                      │    ┌─────┴────────┐
 ┌─────────────┐     ┌──────────────┐     ┌───────────┴─┐  │   Circuit    │
-│  Event      │────▶│  Amazon      │────▶│  AWS Lambda  │──┤   Breaker    │
-│  Producers  │     │  EventBridge │     │  (Transform  │  │  (Degrade    │
+│  Event      │────▶│  Apache      │────▶│  AWS Lambda  │──┤   Breaker    │
+│  Producers  │     │  Kafka       │     │  (Transform  │  │  (Degrade    │
 │  (Python)   │     │              │     │   + Enrich)  │  │   Gracefully)│
 └─────────────┘     └──────┬───────┘     └──┬───────┬──┘  └──────────────┘
-                           │                │       │
-                           │                │       ▼
-                           │                │ ┌─────────────────┐  ┌──────────────┐
-                           │                │ │  Amazon Kinesis  │─▶│  S3 + Athena │
+       ▲                   │                │       │
+       │                   │                │       ▼
+  Route 53                 │                │ ┌─────────────────┐  ┌──────────────┐
+  (DNS routing)            │                │ │  Amazon Kinesis  │─▶│  S3 + Athena │
                            │                │ │  Data Firehose   │  │  (Analytics) │
                            │                │ └─────────────────┘  └──────────────┘
                            │                │
                            ▼                ▼
                     ┌─────────────────┐  ┌─────────────┐
-                    │  Amazon         │  │  Amazon SQS  │
-                    │  CloudWatch     │  │  (DLQ)       │
-                    │  (Metrics +     │  │  ⚠ Alarma    │
-                    │   Dashboards +  │  └──────┬──────┘
-                    │   Alarms)       │◀────────┘
-                    └─────────────────┘
+                    │  Grafana        │  │  Amazon SQS  │
+                    │  (Metrics +     │  │  (DLQ)       │
+                    │   Dashboards +  │  │  ⚠ Alarma    │
+                    │   Alerts)       │  └──────┬──────┘
+                    └─────────────────┘◀────────┘
 ```
 
 ### Flujo del evento
 
-1. **Click** — El producer genera eventos de e-commerce (page view, cart, purchase)
-2. **Ingest** — EventBridge recibe y rutea eventos por tipo usando reglas
-3. **Process** — Lambda transforma, valida y enriquece cada evento
-4. **Store** — DynamoDB para acceso real-time, S3 vía Firehose para analytics
-5. **Insight** — CloudWatch dashboards muestran métricas de negocio en vivo
+1. **Click** — El producer (Python) genera eventos de e-commerce (page view, cart, purchase)
+2. **Route** — AWS Route 53 resuelve el tráfico hacia el endpoint de ingesta
+3. **Ingest** — Apache Kafka recibe y rutea eventos por tipo usando topics
+4. **Process** — Lambda transforma, valida y enriquece cada evento de forma asíncrona
+5. **Store** — DynamoDB para acceso real-time, S3 vía Firehose para analytics
+6. **Insight** — Grafana dashboards muestran métricas de negocio en vivo
 
 ### Resiliencia
 
 - **Circuit Breaker** — Si DynamoDB falla, Lambda deja de escribir ahí (circuito abierto) pero sigue enviando a Firehose y emitiendo métricas. Cuando DynamoDB se recupera, el circuito se cierra automáticamente.
 - **Dead Letter Queue** — Eventos que Lambda no puede procesar van a SQS (14 días de retención) para investigación y reprocesamiento.
-- **Alarmas** — CloudWatch alerta por SNS cuando hay errores de Lambda, throttling, o mensajes en la DLQ.
+- **Alarmas** — Grafana alerta cuando hay errores de Lambda, throttling, o mensajes en la DLQ.
 
 ---
 
-## Alternativas por capa
+## Stack tecnológico
 
-| Capa | AWS (este repo) | Alternativa | Tradeoff clave |
-|------|-----------------|-------------|----------------|
-| Ingestion | EventBridge | Kafka (Confluent Cloud) | Costo vs control de ordering y replay |
-| Processing | Lambda | Kafka Streams / Flink | Latencia vs complejidad operativa |
-| Storage RT | DynamoDB | Redis / ElastiCache | Costo vs flexibilidad de queries |
+| Capa | Tecnología | Alternativa AWS nativa | Tradeoff clave |
+|------|------------|------------------------|----------------|
+| DNS / Routing | AWS Route 53 | ALB / API Gateway | Control de tráfico global vs simplicidad |
+| Ingestion | Apache Kafka | Amazon EventBridge | Control de ordering y replay vs costo operativo |
+| Processing | AWS Lambda (Python) | Kafka Streams / Flink | Latencia vs complejidad operativa |
+| Storage RT | Amazon DynamoDB | Redis / ElastiCache | Costo vs flexibilidad de queries |
 | Storage Analytics | S3 + Athena | Redshift / Snowflake | Costo vs performance en queries complejas |
-| Observability | CloudWatch | Grafana / Datadog | Vendor lock-in vs ecosistema unificado |
+| Observability | Grafana | Amazon CloudWatch | Ecosistema unificado vs vendor lock-in |
 
 ---
 
@@ -84,7 +105,7 @@ desacoplada y resiliente — sin que los productores se rompan cuando el backend
 
 ```
 click-to-insight-ecommerce/
-├── infrastructure/          # Terraform — toda la infra AWS
+├── infrastructure/          # Terraform — toda la infra
 ├── src/
 │   ├── producers/           # Generadores de eventos (Python)
 │   └── lambdas/             # Funciones de procesamiento
@@ -95,7 +116,7 @@ click-to-insight-ecommerce/
 │   ├── tradeoffs/           # Análisis de alternativas por capa
 │   ├── lessons-learned/     # Lecciones aprendidas
 │   └── demo/                # Runbook y guía de la demo en vivo
-├── dashboards/              # Definiciones de CloudWatch dashboards
+├── dashboards/              # Definiciones de dashboards Grafana
 └── tests/                   # Tests de integración
 ```
 
@@ -108,6 +129,7 @@ click-to-insight-ecommerce/
 - AWS CLI configurado (región: us-east-2)
 - Terraform >= 1.5
 - Python >= 3.12
+- Apache Kafka (local o Confluent Cloud)
 
 ### Deploy
 
@@ -139,7 +161,7 @@ Ver [docs/well-architected/](docs/well-architected/) para el análisis completo.
 Charla presentada en ACM Week 2026, Bogotá, Colombia.
 Organizada por la Association for Computing Machinery.
 
-**Speaker:** Rocío — Data Engineer especializada en arquitecturas event-driven y AWS.
+**Speaker:** Rocío Baigorria — Data Engineer especializada en arquitecturas event-driven y AWS.
 
 ---
 
